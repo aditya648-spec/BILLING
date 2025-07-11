@@ -2,33 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RAJ CABLE LOGIN</title>
   <style>
     body {
-      margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background-color: #f1f5f9;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       height: 100vh;
+      background: #f1f5f9;
     }
     .login-box {
-      background-color: white;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
       max-width: 400px;
       width: 100%;
     }
     input, button {
+      display: block;
       width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      border-radius: 6px;
-      border: 1px solid #cbd5e1;
+      padding: 10px;
+      margin: 10px 0;
       font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
     }
     button {
       background-color: #00C49F;
@@ -40,27 +40,34 @@
     button:hover {
       background-color: #059669;
     }
+    h2 {
+      text-align: center;
+    }
   </style>
 </head>
 <body>
   <div class="login-box">
-    <h2 style="text-align: center;">RAJ CABLE LOGIN</h2>
+    <h2>RAJ CABLE LOGIN</h2>
     <input type="text" id="username" placeholder="Enter Username" />
+    <input type="password" id="password" placeholder="Enter Password" />
     <button onclick="login()">Login</button>
   </div>
 
   <script>
     function login() {
-      const username = document.getElementById("username").value.trim().toLowerCase();
-      if (username === "papa") {
-        location.href = "papa.html";
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+
+      if (username === 'papa' && password === 'raj@123') {
+        window.location.href = 'papa.html';
+      } else if (username === 'worker' && password === 'raj@123') {
+        window.location.href = 'worker.html';
       } else {
-        location.href = "worker.html";
+        alert('Invalid login. Try papa / worker and password raj@123');
       }
     }
 
-    // Allow pressing Enter to login
-    document.getElementById("username").addEventListener("keydown", function(e) {
+    document.addEventListener("keydown", function(e) {
       if (e.key === "Enter") login();
     });
   </script>
