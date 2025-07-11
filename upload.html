@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Upload - RAJ CABLE</title>
   <style>
     body {
@@ -25,7 +25,6 @@
       font-size: 24px;
       margin-bottom: 30px;
       text-align: center;
-      color: white;
     }
     .sidebar ul {
       list-style: none;
@@ -33,6 +32,7 @@
     }
     .sidebar ul li {
       margin-bottom: 18px;
+      border-radius: 6px;
     }
     .sidebar ul li a {
       font-weight: 600;
@@ -104,37 +104,50 @@
     <h2>Upload Renewal Excel File</h2>
     <div class="upload-box">
       <input type="file" id="uploadFile" accept=".csv" />
-      <button onclick="uploadFile()">Upload & Save</button>
+      <button onclick="uploadToSheet()">Upload & Save</button>
       <div id="status"></div>
     </div>
   </div>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbxq25psbXBKOBpQ_o2JvW2Aqu1Ju5MQ5DEcQMs6dnk2JfbbdpRV8zEs_nTajjd_milcBw/exec";
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbxq25psbXBKOBpQ_o2JvW2Aqu1Ju5MQ5DEcQMs6dnk2JfbbdpRV8zEs_nTajjd_milcBw/exec";
 
-    function uploadFile() {
+    function uploadToSheet() {
       const fileInput = document.getElementById("uploadFile");
       const file = fileInput.files[0];
       if (!file) return alert("Please select a CSV file.");
 
       const reader = new FileReader();
       reader.onload = function(e) {
-        const lines = e.target.result.split("\n").filter(Boolean);
+        const lines = e.target.result.split('\n').filter(line => line.trim() !== '');
+        const data = [];
+
         for (let i = 1; i < lines.length; i++) {
-          const [CUSTOMER_NBR, PACKAGE_NAME] = lines[i].split(",");
-          if (!CUSTOMER_NBR) continue;
-          const data = {
-            CUSTOMER_NBR: CUSTOMER_NBR.trim(),
-            PACKAGE_NAME: PACKAGE_NAME.trim(),
-            paid: "false"
-          };
-          fetch(scriptURL, {
-            method: "POST",
-            body: JSON.stringify({ action: "addCustomer", ...data }),
-            headers: { "Content-Type": "application/json" }
-          });
+          const [CUSTOMER_NBR, PACKAGE_NAME] = lines[i].split(',');
+          if (CUSTOMER_NBR && PACKAGE_NAME) {
+            data.push({
+              CUSTOMER_NBR: CUSTOMER_NBR.trim(),
+              PACKAGE_NAME: PACKAGE_NAME.trim(),
+              paid: false
+            });
+          }
         }
-        document.getElementById("status").innerText = "Uploaded successfully!";
+
+        fetch(BACKEND_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "upload", data }),
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+        .then(res => res.text())
+        .then(msg => {
+          document.getElementById("status").innerText = "Upload complete!";
+        })
+        .catch(err => {
+          document.getElementById("status").innerText = "Error uploading.";
+          console.error(err);
+        });
       };
       reader.readAsText(file);
     }
