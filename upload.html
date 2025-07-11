@@ -32,17 +32,15 @@
     }
     .sidebar ul li {
       margin-bottom: 18px;
-      border-radius: 6px;
     }
     .sidebar ul li a {
-      font-weight: 600;
-      color: white;
-      text-decoration: none;
       display: block;
       padding: 10px 12px;
+      color: white;
+      text-decoration: none;
       border-radius: 6px;
-      cursor: pointer;
       transition: 0.3s;
+      font-weight: 600;
     }
     .sidebar ul li a:hover,
     .sidebar ul li a.active {
@@ -101,54 +99,62 @@
   </div>
 
   <div class="main">
-    <h2>Upload Renewal Excel File</h2>
+    <h2>Upload Renewal CSV File</h2>
     <div class="upload-box">
       <input type="file" id="uploadFile" accept=".csv" />
-      <button onclick="uploadToSheet()">Upload & Save</button>
+      <button onclick="uploadRenewals()">Upload & Save</button>
       <div id="status"></div>
     </div>
   </div>
 
   <script>
-    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbxq25psbXBKOBpQ_o2JvW2Aqu1Ju5MQ5DEcQMs6dnk2JfbbdpRV8zEs_nTajjd_milcBw/exec";
+    const backendUrl = "https://script.google.com/macros/s/AKfycbxq25psbXBKOBpQ_o2JvW2Aqu1Ju5MQ5DEcQMs6dnk2JfbbdpRV8zEs_nTajjd_milcBw/exec";
 
-    function uploadToSheet() {
+    function uploadRenewals() {
       const fileInput = document.getElementById("uploadFile");
       const file = fileInput.files[0];
       if (!file) return alert("Please select a CSV file.");
 
       const reader = new FileReader();
       reader.onload = function(e) {
-        const lines = e.target.result.split('\n').filter(line => line.trim() !== '');
+        const lines = e.target.result.split("\n").filter(Boolean);
         const data = [];
 
         for (let i = 1; i < lines.length; i++) {
           const [CUSTOMER_NBR, PACKAGE_NAME] = lines[i].split(',');
-          if (CUSTOMER_NBR && PACKAGE_NAME) {
+          if (CUSTOMER_NBR) {
             data.push({
               CUSTOMER_NBR: CUSTOMER_NBR.trim(),
-              PACKAGE_NAME: PACKAGE_NAME.trim(),
+              PACKAGE_NAME: PACKAGE_NAME ? PACKAGE_NAME.trim() : '',
               paid: false
             });
           }
         }
 
-        fetch(BACKEND_URL, {
+        fetch(backendUrl, {
           method: "POST",
-          body: JSON.stringify({ action: "upload", data }),
+          body: JSON.stringify({
+            action: "upload",
+            customers: data
+          }),
           headers: {
             "Content-Type": "application/json"
           }
         })
-        .then(res => res.text())
-        .then(msg => {
-          document.getElementById("status").innerText = "Upload complete!";
+        .then(res => res.json())
+        .then(res => {
+          if (res.success) {
+            document.getElementById("status").innerText = "Uploaded successfully!";
+          } else {
+            document.getElementById("status").innerText = "Error: " + res.message;
+          }
         })
         .catch(err => {
-          document.getElementById("status").innerText = "Error uploading.";
           console.error(err);
+          document.getElementById("status").innerText = "Something went wrong!";
         });
       };
+
       reader.readAsText(file);
     }
   </script>
