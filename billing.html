@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Worker Dashboard - RAJ CABLE</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Billing - RAJ CABLE</title>
   <style>
     body {
       margin: 0;
@@ -32,19 +32,13 @@
     }
     .sidebar ul li {
       margin-bottom: 18px;
-      border-radius: 6px;
-    }
-    .sidebar ul li a {
-      color: white;
-      text-decoration: none;
-      display: block;
       padding: 10px 12px;
       border-radius: 6px;
-      font-weight: 600;
+      cursor: pointer;
       transition: 0.3s;
     }
-    .sidebar ul li a:hover,
-    .sidebar ul li a.active {
+    .sidebar ul li:hover,
+    .sidebar ul li.active {
       background-color: #334155;
       color: #00C49F;
     }
@@ -52,34 +46,17 @@
       flex: 1;
       padding: 30px;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    .form-box {
       background: white;
-      border-radius: 8px;
-      overflow: hidden;
+      padding: 30px;
+      border-radius: 10px;
+      max-width: 500px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    th, td {
-      padding: 12px;
-      border: 1px solid #d1d5db;
-      text-align: left;
-    }
-    th {
-      background-color: #f3f4f6;
-    }
-    .paid {
-      color: green;
-      font-weight: bold;
-    }
-    .unpaid {
-      color: red;
-      font-weight: bold;
     }
     select, input, button {
       padding: 10px;
-      margin: 10px 0;
       width: 100%;
+      margin-top: 10px;
       font-size: 16px;
       border-radius: 6px;
       border: 1px solid #d1d5db;
@@ -94,30 +71,33 @@
     button:hover {
       background-color: #059669;
     }
-
-    /* Modal styles */
+    .button-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
     .modal {
       display: none;
       position: fixed;
-      z-index: 10;
+      z-index: 100;
       left: 0;
       top: 0;
       width: 100%;
       height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.5);
+      background-color: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
     }
     .modal-content {
-      background-color: white;
-      margin: 15% auto;
-      padding: 20px;
-      border-radius: 8px;
-      width: 90%;
-      max-width: 400px;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
       text-align: center;
+      max-width: 400px;
     }
-    .modal-content button {
-      margin: 10px;
+    .modal-content img {
+      max-width: 200px;
+      margin: 15px 0;
     }
   </style>
 </head>
@@ -126,160 +106,108 @@
     <div>
       <h2>RAJ CABLE</h2>
       <ul>
-        <li><a href="#" class="active" onclick="showTab('dashboard')">Dashboard</a></li>
-        <li><a href="#" onclick="showTab('billing')">Billing</a></li>
+        <li onclick="location.href='worker.html'">Dashboard</li>
+        <li class="active">Billing</li>
       </ul>
     </div>
     <ul>
-      <li><a href="index.html">Logout</a></li>
+      <li onclick="location.href='index.html'">Logout</li>
     </ul>
   </div>
 
   <div class="main">
-    <div id="dashboard" class="tab">
-      <h2>Customer Status</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Customer</th>
-            <th>Number</th>
-            <th>Payment</th>
-          </tr>
-        </thead>
-        <tbody id="customerTableBody"></tbody>
-      </table>
-    </div>
-
-    <div id="billing" class="tab" style="display:none;">
-      <h2>Billing</h2>
-      <select id="customerSelect"></select>
+    <h2>Billing Section</h2>
+    <div class="form-box">
+      <label>Select Customer</label>
+      <select id="customerDropdown">
+        <option value="">-- Select Customer --</option>
+      </select>
+      <label>Enter Amount</label>
       <input type="number" id="amountInput" placeholder="Enter amount" />
-      <button onclick="markPaid()">Mark as Paid</button>
-      <button onclick="showUPIModal()">UPI</button>
+
+      <div class="button-row">
+        <button onclick="showQR()">UPI</button>
+        <button onclick="markAsPaid()">Mark as Paid</button>
+      </div>
     </div>
   </div>
 
-  <!-- UPI Modal -->
-  <div id="upiModal" class="modal">
+  <!-- QR Modal -->
+  <div id="qrModal" class="modal">
     <div class="modal-content">
-      <img src="QRCode.png" alt="QR Code" style="width: 100%; border-radius: 8px;" />
-      <button onclick="markPaid(true)">Paid</button>
-      <button onclick="hideUpiModal()">Cancel</button>
+      <h3>Scan to Pay</h3>
+      <img src="QRCode.png" alt="UPI QR Code" />
+      <div class="button-row">
+        <button onclick="markAsPaid()">Mark as Paid</button>
+        <button onclick="hideQR()">Cancel</button>
+      </div>
     </div>
   </div>
 
-  <!-- Print Confirmation Modal -->
+  <!-- Print Modal -->
   <div id="printModal" class="modal">
     <div class="modal-content">
       <p>Do you want to print the receipt?</p>
-      <button onclick="confirmPrint(true)">Yes</button>
-      <button onclick="confirmPrint(false)">No</button>
+      <div class="button-row">
+        <button onclick="doPrint()">Yes</button>
+        <button onclick="hidePrint()">No</button>
+      </div>
     </div>
   </div>
 
   <script>
-    let customerData = JSON.parse(localStorage.getItem("customerData") || "[]");
-    const nameMap = JSON.parse(localStorage.getItem("customerNames") || "{}");
+    const dropdown = document.getElementById("customerDropdown");
+    const map = JSON.parse(localStorage.getItem("customerNames") || "{}");
+    const data = JSON.parse(localStorage.getItem("customerData") || "[]");
 
-    function showTab(tabId) {
-      document.querySelectorAll(".tab").forEach(tab => tab.style.display = "none");
-      document.getElementById(tabId).style.display = "block";
-      document.querySelectorAll(".sidebar ul li a").forEach(a => a.classList.remove("active"));
-      event.target.classList.add("active");
+    Object.keys(map).forEach(num => {
+      const option = document.createElement("option");
+      option.value = num;
+      option.textContent = map[num];
+      dropdown.appendChild(option);
+    });
+
+    function showQR() {
+      const modal = document.getElementById("qrModal");
+      modal.style.display = "flex";
     }
 
-    function updateCustomerTable() {
-      const tbody = document.getElementById("customerTableBody");
-      tbody.innerHTML = "";
-      customerData.forEach(cust => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${nameMap[cust.CUSTOMER_NBR] || "-"}</td>
-          <td>${cust.CUSTOMER_NBR}</td>
-          <td class="${cust.paid ? 'paid' : 'unpaid'}">${cust.paid ? 'Paid' : 'Unpaid'}</td>
-        `;
-        tbody.appendChild(row);
-      });
+    function hideQR() {
+      document.getElementById("qrModal").style.display = "none";
     }
 
-    function updateCustomerDropdown() {
-      const select = document.getElementById("customerSelect");
-      select.innerHTML = '<option value="">Select Customer</option>';
-      customerData.forEach((cust, index) => {
-        if (!cust.paid) {
-          const name = nameMap[cust.CUSTOMER_NBR] || cust.CUSTOMER_NBR;
-          const option = document.createElement("option");
-          option.value = index;
-          option.textContent = name;
-          select.appendChild(option);
-        }
-      });
-    }
-
-    let upiModal = document.getElementById("upiModal");
-    let printModal = document.getElementById("printModal");
-    let lastPaidCustomer = null;
-
-    function markPaid(fromUPI = false) {
-      const index = document.getElementById("customerSelect").value;
+    function markAsPaid() {
+      const number = dropdown.value;
       const amount = document.getElementById("amountInput").value;
-      if (index === "" || !amount) return alert("Select customer and amount.");
-      customerData[index].paid = true;
-      customerData[index].amount = amount;
-      localStorage.setItem("customerData", JSON.stringify(customerData));
-      lastPaidCustomer = customerData[index];
-      updateCustomerTable();
-      updateCustomerDropdown();
-      if (fromUPI) hideUpiModal();
-      showPrintModal();
+      if (!number || !amount) return alert("Select customer and enter amount");
+
+      const customers = data.map(c => {
+        if (c.CUSTOMER_NBR === number) {
+          return { ...c, paid: true };
+        }
+        return c;
+      });
+
+      localStorage.setItem("customerData", JSON.stringify(customers));
+      document.getElementById("printModal").style.display = "flex";
     }
 
-    function showUPIModal() {
-      if (!document.getElementById("customerSelect").value) return alert("Select customer first");
-      upiModal.style.display = "block";
+    function doPrint() {
+      document.getElementById("printModal").style.display = "none";
+      window.print();
     }
 
-    function hideUpiModal() {
-      upiModal.style.display = "none";
+    function hidePrint() {
+      document.getElementById("printModal").style.display = "none";
     }
 
-    function showPrintModal() {
-      printModal.style.display = "block";
-    }
-
-    function confirmPrint(print) {
-      printModal.style.display = "none";
-      if (print && lastPaidCustomer) {
-        printReceipt(lastPaidCustomer);
+    // Close modal if clicked outside
+    window.onclick = function(e) {
+      if (e.target.classList.contains("modal")) {
+        hideQR();
+        hidePrint();
       }
-      resetForm();
     }
-
-    function resetForm() {
-      document.getElementById("customerSelect").value = "";
-      document.getElementById("amountInput").value = "";
-    }
-
-    function printReceipt(cust) {
-      const name = nameMap[cust.CUSTOMER_NBR] || cust.CUSTOMER_NBR;
-      const win = window.open("", "", "width=300,height=400");
-      win.document.write(`<h3>RAJ CABLE Receipt</h3><hr>`);
-      win.document.write(`<p><strong>Name:</strong> ${name}</p>`);
-      win.document.write(`<p><strong>Number:</strong> ${cust.CUSTOMER_NBR}</p>`);
-      win.document.write(`<p><strong>Amount:</strong> ₹${cust.amount}</p>`);
-      win.document.write(`<p><strong>Status:</strong> Paid</p>`);
-      win.print();
-      win.close();
-    }
-
-    window.onclick = function(event) {
-      if (event.target == upiModal) hideUpiModal();
-      if (event.target == printModal) printModal.style.display = "none";
-    }
-
-    // Initial load
-    updateCustomerTable();
-    updateCustomerDropdown();
   </script>
 </body>
 </html>
