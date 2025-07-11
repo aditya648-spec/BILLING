@@ -1,97 +1,142 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Worker Dashboard - RAJ CABLE</title>
-<style>
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    display: flex;
-    background-color: #f9fafb;
-  }
-  .sidebar {
-    width: 230px;
-    background-color: #1e293b;
-    color: white;
-    padding: 20px;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  .sidebar h2 {
-    font-size: 24px;
-    margin-bottom: 30px;
-    text-align: center;
-    color: white;
-  }
-  .sidebar ul {
-    list-style: none;
-    padding: 0;
-  }
-  .sidebar ul li {
-    margin-bottom: 18px;
-  }
-  .sidebar ul li a {
-    font-family: 'Segoe UI', sans-serif;
-    font-weight: 600;
-    color: white;
-    text-decoration: none;
-    display: block;
-    padding: 10px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-  .sidebar ul li a:hover,
-  .sidebar ul li a.active {
-    background-color: #334155;
-    color: #00C49F;
-  }
-  .main {
-    flex: 1;
-    padding: 30px;
-    overflow-x: auto;
-  }
-  h2 {
-    font-size: 22px;
-    margin-bottom: 15px;
-    color: #111827;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    border: 2px solid #ddd;
-  }
-  th, td {
-    text-align: left;
-    padding: 12px;
-    border: 1px solid #ddd;
-  }
-  th {
-    background-color: #f3f4f6;
-  }
-  td.status-paid {
-    background-color: #d1fae5; /* light green */
-    color: #065f46; /* dark green text */
-    font-weight: bold;
-  }
-  td.status-pending {
-    background-color: #fee2e2; /* light red */
-    color: #991b1b; /* dark red text */
-    font-weight: bold;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Worker Dashboard - RAJ CABLE</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      background-color: #f9fafb;
+    }
+    .sidebar {
+      width: 230px;
+      background-color: #1e293b;
+      color: white;
+      padding: 20px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .sidebar h2 {
+      font-size: 24px;
+      margin-bottom: 30px;
+      text-align: center;
+      color: white;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sidebar ul li {
+      margin-bottom: 18px;
+    }
+    .sidebar ul li a {
+      color: white;
+      text-decoration: none;
+      display: block;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      transition: 0.3s;
+    }
+    .sidebar ul li a:hover,
+    .sidebar ul li a.active {
+      background-color: #334155;
+      color: #00C49F;
+    }
+    .main {
+      flex: 1;
+      padding: 30px;
+    }
+    .hidden {
+      display: none;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #f1f5f9;
+    }
+    .paid {
+      color: green;
+      font-weight: bold;
+    }
+    .pending {
+      color: red;
+      font-weight: bold;
+    }
+    select, input[type="number"], button {
+      padding: 10px;
+      margin-top: 10px;
+      width: 100%;
+      border-radius: 6px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background-color: #00C49F;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #059669;
+    }
+    #qrModal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+    #printModal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+    }
+  </style>
 </head>
 <body>
   <div class="sidebar">
     <div>
       <h2>RAJ CABLE</h2>
       <ul>
-        <li><a href="worker.html" class="active">Dashboard</a></li>
-        <li><a href="billing.html">Billing</a></li>
+        <li><a href="#" class="active" onclick="showTab('dashboard')">Dashboard</a></li>
+        <li><a href="#" onclick="showTab('billing')">Billing</a></li>
       </ul>
     </div>
     <ul>
@@ -100,51 +145,118 @@
   </div>
 
   <div class="main">
-    <h2>Customer List</h2>
-    <table id="customerTable">
-      <thead>
-        <tr>
-          <th>Customer Number</th>
-          <th>Payment Status</th>
-          <th>Paid Amount (₹)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Rows will be generated here -->
-      </tbody>
-    </table>
+    <div id="dashboard">
+      <h2>Customer Table</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="customerTable"></tbody>
+      </table>
+    </div>
+
+    <div id="billing" class="hidden">
+      <h2>Mark Payment</h2>
+      <select id="customerSelect"></select>
+      <input type="number" id="amount" placeholder="Enter amount">
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button onclick="markPaid()">Mark as Paid</button>
+        <button onclick="showQR()">UPI</button>
+      </div>
+    </div>
   </div>
 
-<script>
-  function loadCustomers() {
-    const tbody = document.querySelector('#customerTable tbody');
-    tbody.innerHTML = '';
+  <!-- UPI Modal -->
+  <div id="qrModal">
+    <div class="modal-content">
+      <img src="QRCode.png" alt="UPI QR" width="250"><br><br>
+      <button onclick="markPaid()">Mark as Paid</button>
+      <button onclick="closeQR()">Cancel</button>
+    </div>
+  </div>
 
-    const customers = JSON.parse(localStorage.getItem('customerData') || '[]');
+  <!-- Print Modal -->
+  <div id="printModal">
+    <div class="modal-content">
+      <p>Do you want to print the bill?</p>
+      <button onclick="handlePrint(true)">Yes</button>
+      <button onclick="handlePrint(false)">No</button>
+    </div>
+  </div>
 
-    if(customers.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No customer data found.</td></tr>';
-      return;
+  <script>
+    const backend = "https://script.google.com/macros/s/AKfycbxq25psbXBKOBpQ_o2JvW2Aqu1Ju5MQ5DEcQMs6dnk2JfbbdpRV8zEs_nTajjd_milcBw/exec";
+
+    let selectedNumber = '';
+
+    function showTab(tab) {
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('billing').classList.add('hidden');
+      document.getElementById(tab).classList.remove('hidden');
     }
 
-    customers.forEach(cust => {
-      const tr = document.createElement('tr');
+    function fetchCustomers() {
+      fetch(backend + "?action=fetch")
+        .then(res => res.json())
+        .then(data => {
+          const namesMap = JSON.parse(localStorage.getItem("customerNames") || "{}");
+          const table = document.getElementById("customerTable");
+          const dropdown = document.getElementById("customerSelect");
+          table.innerHTML = "";
+          dropdown.innerHTML = "";
+          data.forEach(c => {
+            const row = document.createElement("tr");
+            const name = namesMap[c.CUSTOMER_NBR] || c.CUSTOMER_NBR;
+            row.innerHTML = `
+              <td>${name}</td>
+              <td class="${c.paid ? 'paid' : 'pending'}">${c.paid ? 'Paid' : 'Pending'}</td>`;
+            table.appendChild(row);
 
-      // Payment status cell with color class
-      const statusClass = cust.paid ? 'status-paid' : 'status-pending';
-      const paidAmount = cust.paidAmount ? cust.paidAmount : '-';
+            if (!c.paid) {
+              const opt = document.createElement("option");
+              opt.value = c.CUSTOMER_NBR;
+              opt.text = name;
+              dropdown.appendChild(opt);
+            }
+          });
+        });
+    }
 
-      tr.innerHTML = `
-        <td>${cust.CUSTOMER_NBR}</td>
-        <td class="${statusClass}">${cust.paid ? 'Paid' : 'Pending'}</td>
-        <td>${paidAmount}</td>
-      `;
+    function markPaid() {
+      const CUSTOMER_NBR = document.getElementById("customerSelect").value;
+      const amount = document.getElementById("amount").value;
+      if (!CUSTOMER_NBR || !amount) return alert("Select customer and enter amount");
 
-      tbody.appendChild(tr);
-    });
-  }
+      selectedNumber = CUSTOMER_NBR;
 
-  window.onload = loadCustomers;
-</script>
+      // Show print modal
+      document.getElementById("printModal").style.display = "flex";
+    }
+
+    function handlePrint(shouldPrint) {
+      document.getElementById("printModal").style.display = "none";
+
+      fetch(backend + "?action=markPaid&number=" + selectedNumber, { method: "POST" })
+        .then(res => res.text())
+        .then(() => {
+          alert("Marked as paid.");
+          if (shouldPrint) window.print();
+          fetchCustomers();
+        });
+    }
+
+    function showQR() {
+      document.getElementById("qrModal").style.display = "flex";
+    }
+
+    function closeQR() {
+      document.getElementById("qrModal").style.display = "none";
+    }
+
+    fetchCustomers();
+  </script>
 </body>
 </html>
