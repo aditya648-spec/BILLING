@@ -1,157 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Upload - RAJ CABLE</title>
-<style>
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
-    display: flex;
-    background-color: #f9fafb;
-  }
-  .sidebar {
-    width: 230px;
-    background-color: #1e293b;
-    color: white;
-    padding: 20px;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-  .sidebar h2 {
-    font-size: 24px;
-    margin-bottom: 30px;
-    text-align: center;
-    color: white;
-  }
-  .sidebar ul {
-    list-style: none;
-    padding: 0;
-  }
-  .sidebar ul li {
-    margin-bottom: 18px;
-    border-radius: 6px;
-  }
-  .sidebar ul li a {
-    font-family: 'Segoe UI', sans-serif;
-    font-weight: 600;
-    color: white;
-    text-decoration: none;
-    display: block;
-    padding: 10px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-  .sidebar ul li a:hover,
-  .sidebar ul li a.active {
-    background-color: #334155;
-    color: #00C49F;
-  }
-  .main {
-    flex: 1;
-    padding: 30px;
-  }
-  h2 {
-    font-size: 22px;
-    margin-bottom: 15px;
-    color: #111827;
-  }
-  .upload-box {
-    background: white;
-    padding: 30px;
-    border-radius: 10px;
-    max-width: 500px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-  input[type="file"], button {
-    padding: 10px;
-    width: 100%;
-    margin-top: 10px;
-    font-size: 16px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
-  }
-  button {
-    background-color: #00C49F;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    border: none;
-  }
-  button:hover {
-    background-color: #059669;
-  }
-  #status {
-    margin-top: 15px;
-    color: green;
-  }
-</style>
-</head>
-<body>
-  <div class="sidebar">
-    <div>
-      <h2>RAJ CABLE</h2>
-      <ul>
-        <li><a href="papa.html">Dashboard</a></li>
-        <li><a href="upload.html" class="active">Upload</a></li>
-        <li><a href="custadd.html">Customer Add</a></li>
-        <li><a href="custupload.html">Customer Upload</a></li>
-      </ul>
-    </div>
-    <ul>
-      <li><a href="index.html">Logout</a></li>
-    </ul>
-  </div>
+<!-- upload.html -->
+<input type="file" id="csvFile" />
+<button onclick="upload()">Upload to Server</button>
 
-  <div class="main">
-    <h2>Upload Renewal Excel File</h2>
-    <div class="upload-box">
-      <input type="file" id="uploadFile" accept=".csv" />
-      <button onclick="uploadFile()">Upload & Save</button>
-      <button style="background-color:#ef4444;" onclick="cleanAll()">Clean All</button>
-      <div id="status"></div>
-    </div>
-  </div>
+<script>
+const BACKEND_URL = "https://script.google.com/macros/s/xxx/exec"; // Replace with your script URL
 
-  <script>
-    function uploadFile() {
-      const fileInput = document.getElementById("uploadFile");
-      const file = fileInput.files[0];
-      if (!file) {
-        alert("Please select a CSV file.");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const lines = e.target.result.split('\n').filter(line => line.trim() !== "");
-        const newCustomers = [];
-        for (let i = 1; i < lines.length; i++) { // skip header line
-          const [CUSTOMER_NBR, PACKAGE_NAME] = lines[i].split(',');
-          if (!CUSTOMER_NBR) continue;
-          newCustomers.push({
-            CUSTOMER_NBR: CUSTOMER_NBR.trim(),
-            PACKAGE_NAME: (PACKAGE_NAME || "").trim(),
-            paid: false
-          });
-        }
-        localStorage.setItem("customerData", JSON.stringify(newCustomers));
-        localStorage.setItem("customerDataSync", Date.now()); // trigger sync event
-        document.getElementById("status").innerText = "Uploaded and saved successfully!";
-        fileInput.value = "";
-      };
-      reader.readAsText(file);
-    }
+function upload() {
+  const fileInput = document.getElementById('csvFile');
+  const file = fileInput.files[0];
+  if (!file) return alert("Choose a file");
 
-    function cleanAll() {
-      if (!confirm("Are you sure you want to delete all uploaded customer data?")) return;
-      localStorage.removeItem("customerData");
-      localStorage.setItem("customerDataSync", Date.now()); // trigger sync event
-      document.getElementById("status").innerText = "All customer data has been deleted.";
-    }
-  </script>
-</body>
-</html>
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const lines = e.target.result.split("\n").filter(Boolean);
+    const customers = lines.slice(1).map(line => {
+      const [CUSTOMER_NBR, NAME] = line.split(',');
+      return { CUSTOMER_NBR: CUSTOMER_NBR.trim(), PAID: false, NAME: NAME?.trim() || "" };
+    });
+
+    fetch(BACKEND_URL, {
+      method: "POST",
+      body: JSON.stringify({ action: "uploadCustomers", customers }),
+      headers: { "Content-Type": "application/json" }
+    })
+    .then(res => res.text())
+    .then(res => alert("Uploaded: " + res));
+  };
+
+  reader.readAsText(file);
+}
+</script>
