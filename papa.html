@@ -4,13 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Papa Dashboard - RAJ CABLE</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
       display: flex;
       background-color: #f9fafb;
+      flex-direction: row;
     }
+
     .sidebar {
       width: 230px;
       background-color: #1e293b;
@@ -21,28 +24,33 @@
       flex-direction: column;
       justify-content: space-between;
     }
+
     .sidebar h2 {
       font-size: 24px;
       margin-bottom: 30px;
       text-align: center;
     }
+
     .sidebar ul {
       list-style: none;
       padding: 0;
     }
+
     .sidebar ul li {
       margin-bottom: 18px;
       border-radius: 6px;
     }
+
     .sidebar ul li a {
+      font-weight: 600;
       color: white;
       text-decoration: none;
       display: block;
       padding: 10px 12px;
       border-radius: 6px;
-      font-weight: 600;
       transition: 0.3s;
     }
+
     .sidebar ul li a:hover,
     .sidebar ul li a.active {
       background-color: #334155;
@@ -52,48 +60,49 @@
     .main {
       flex: 1;
       padding: 30px;
-      overflow-x: auto;
     }
 
-    h2 {
-      font-size: 22px;
-      margin-bottom: 15px;
-      color: #111827;
+    .tab {
+      display: none;
     }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    .tab.active {
+      display: block;
     }
 
-    th, td {
-      border: 1px solid #e5e7eb;
-      padding: 12px 15px;
-      text-align: left;
+    #pieContainer {
+      max-width: 400px;
+      margin: 30px auto;
+      text-align: center;
+      position: relative;
+      height: 400px;
+    }
+
+    #summaryCenter {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-weight: bold;
+      font-size: 18px;
+      white-space: pre-line;
+    }
+
+    #customerList {
+      margin-top: 20px;
+      padding: 0 10px;
+    }
+
+    #customerList li {
+      margin: 6px 0;
       font-size: 16px;
-    }
-
-    th {
-      background-color: #f3f4f6;
-      color: #374151;
-    }
-
-    .paid {
-      color: green;
-      font-weight: bold;
-    }
-
-    .unpaid {
-      color: red;
-      font-weight: bold;
     }
 
     @media (max-width: 600px) {
       body {
         flex-direction: column;
       }
+
       .sidebar {
         width: 100%;
         height: auto;
@@ -101,16 +110,19 @@
         flex-wrap: wrap;
         justify-content: center;
       }
+
       .sidebar ul {
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
       }
+
       .sidebar ul li {
         margin: 5px;
         flex: 1 1 100px;
         text-align: center;
       }
+
       .main {
         padding: 15px;
       }
@@ -122,7 +134,7 @@
     <div>
       <h2>RAJ CABLE</h2>
       <ul>
-        <li><a class="active" href="papa.html">Dashboard</a></li>
+        <li><a href="papa.html" class="active">Dashboard</a></li>
         <li><a href="upload.html">Upload</a></li>
         <li><a href="custadd.html">Customer Add</a></li>
         <li><a href="custupload.html">Customer Upload</a></li>
@@ -134,42 +146,95 @@
   </div>
 
   <div class="main">
-    <h2>Customer Payment Status</h2>
-    <table id="customerTable">
-      <thead>
-        <tr>
-          <th>Customer Number</th>
-          <th>Customer Name</th>
-          <th>Payment</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Rows will be injected by JS -->
-      </tbody>
-    </table>
+    <div id="dashboardTab" class="tab active">
+      <h2>Dashboard Overview</h2>
+      <div id="pieContainer">
+        <canvas id="statusPie" width="400" height="400"></canvas>
+        <div id="summaryCenter"></div>
+        <ul id="customerList"></ul>
+      </div>
+    </div>
   </div>
 
   <script>
-    const data = JSON.parse(localStorage.getItem("customerData") || "[]");
-    const nameMap = JSON.parse(localStorage.getItem("customerNames") || "{}");
-    const tbody = document.querySelector("#customerTable tbody");
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxq25psbXBKOBpQ_o2JvW2Aqu1Ju5MQ5DEcQMs6dnk2JfbbdpRV8zEs_nTajjd_milcBw/exec';
 
-    if (data.length === 0) {
-      const row = document.createElement("tr");
-      row.innerHTML = `<td colspan="3">No customers uploaded.</td>`;
-      tbody.appendChild(row);
-    } else {
-      data.forEach(cust => {
-        const row = document.createElement("tr");
-        const name = nameMap[cust.CUSTOMER_NBR] || cust.CUSTOMER_NBR;
-        row.innerHTML = `
-          <td>${cust.CUSTOMER_NBR}</td>
-          <td>${name}</td>
-          <td class="${cust.paid ? 'paid' : 'unpaid'}">${cust.paid ? 'Paid' : 'Unpaid'}</td>
-        `;
-        tbody.appendChild(row);
+    async function fetchData() {
+      try {
+        const res = await fetch(`${BACKEND_URL}?action=getCustomers`);
+        const data = await res.json();
+        return data || [];
+      } catch (e) {
+        console.error("Error fetching data:", e);
+        return [];
+      }
+    }
+
+    function drawChart(paidCount, unpaidCount) {
+      const ctx = document.getElementById("statusPie").getContext("2d");
+      const chart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["Paid", "Pending"],
+          datasets: [{
+            data: [paidCount, unpaidCount],
+            backgroundColor: ["#00C49F", "#f87171"],
+            borderColor: "#fff",
+          }]
+        },
+        options: {
+          cutout: "65%",
+          onClick: (e, elements) => {
+            if (elements.length) {
+              const index = elements[0].index;
+              const label = chart.data.labels[index].toLowerCase();
+              showCustomerList(label);
+            }
+          },
+          plugins: {
+            legend: { position: "bottom" },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.label}: ${ctx.raw}`
+              }
+            }
+          }
+        }
+      });
+
+      document.getElementById("summaryCenter").innerText = `Paid: ${paidCount}\nPending: ${unpaidCount}`;
+    }
+
+    function showCustomerList(type) {
+      fetchData().then(data => {
+        const list = document.getElementById("customerList");
+        list.innerHTML = "";
+        const customerMap = JSON.parse(localStorage.getItem("customerNames") || "{}");
+        const filtered = data.filter(c => (type === 'paid' ? c.paid : !c.paid));
+        filtered.forEach(cust => {
+          const li = document.createElement("li");
+          const name = customerMap[cust.CUSTOMER_NBR] || cust.CUSTOMER_NBR;
+          li.textContent = `${name} (${cust.CUSTOMER_NBR})`;
+          list.appendChild(li);
+        });
       });
     }
+
+    async function initializeDashboard() {
+      const customers = await fetchData();
+      const paid = customers.filter(c => c.paid).length;
+      const unpaid = customers.filter(c => !c.paid).length;
+      drawChart(paid, unpaid);
+    }
+
+    // Redirect from index.html based on role
+    document.addEventListener("DOMContentLoaded", () => {
+      const role = localStorage.getItem("loginRole");
+      if (role !== "papa") {
+        window.location.href = "index.html";
+      }
+      initializeDashboard();
+    });
   </script>
 </body>
 </html>
