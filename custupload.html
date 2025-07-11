@@ -25,7 +25,6 @@
       font-size: 24px;
       margin-bottom: 30px;
       text-align: center;
-      color: white;
     }
     .sidebar ul {
       list-style: none;
@@ -33,17 +32,14 @@
     }
     .sidebar ul li {
       margin-bottom: 18px;
-      border-radius: 6px;
     }
     .sidebar ul li a {
-      font-family: 'Segoe UI', sans-serif;
-      font-weight: 600;
       color: white;
       text-decoration: none;
       display: block;
       padding: 10px 12px;
       border-radius: 6px;
-      cursor: pointer;
+      font-weight: 600;
       transition: 0.3s;
     }
     .sidebar ul li a:hover,
@@ -143,6 +139,8 @@
   </div>
 
   <script>
+    const backendURL = "https://script.google.com/macros/s/AKfycbxq25psbXBKOBpQ_o2JvW2Aqu1Ju5MQ5DEcQMs6dnk2JfbbdpRV8zEs_nTajjd_milcBw/exec";
+
     function uploadCustomerCSV() {
       const fileInput = document.getElementById("customerFile");
       const file = fileInput.files[0];
@@ -150,13 +148,27 @@
       const reader = new FileReader();
       reader.onload = function(e) {
         const lines = e.target.result.split('\n').filter(Boolean);
-        const map = JSON.parse(localStorage.getItem("customerNames") || "{}");
+        const entries = [];
+
         for (let i = 1; i < lines.length; i++) {
           const [number, name] = lines[i].split(',');
-          if (number && name) map[number.trim()] = name.trim();
+          if (number && name) {
+            entries.push({ CUSTOMER_NBR: number.trim(), name: name.trim() });
+          }
         }
-        localStorage.setItem("customerNames", JSON.stringify(map));
-        document.getElementById("status").innerText = "Customer names saved successfully!";
+
+        fetch(backendURL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "mapBulk", entries })
+        }).then(res => res.json())
+          .then(res => {
+            if (res.success) {
+              document.getElementById("status").innerText = "Customer names uploaded successfully!";
+            } else {
+              alert("Error: " + res.message);
+            }
+          });
       };
       reader.readAsText(file);
     }
