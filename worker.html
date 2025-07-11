@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Worker Dashboard - RAJ CABLE</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    background-color: #f9fafb;
+  }
+  .sidebar {
+    width: 230px;
+    background-color: #1e293b;
+    color: white;
+    padding: 20px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .sidebar h2 {
+    font-size: 24px;
+    margin-bottom: 30px;
+    text-align: center;
+    color: white;
+  }
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  .sidebar ul li {
+    margin-bottom: 18px;
+  }
+  .sidebar ul li a {
+    font-family: 'Segoe UI', sans-serif;
+    font-weight: 600;
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .sidebar ul li a:hover,
+  .sidebar ul li a.active {
+    background-color: #334155;
+    color: #00C49F;
+  }
+  .main {
+    flex: 1;
+    padding: 30px;
+    overflow-x: auto;
+  }
+  h2 {
+    font-size: 22px;
+    margin-bottom: 15px;
+    color: #111827;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 2px solid #ddd;
+  }
+  th, td {
+    text-align: left;
+    padding: 12px;
+    border: 1px solid #ddd;
+  }
+  th {
+    background-color: #f3f4f6;
+  }
+  td.status-paid {
+    background-color: #d1fae5; /* light green */
+    color: #065f46; /* dark green text */
+    font-weight: bold;
+  }
+  td.status-pending {
+    background-color: #fee2e2; /* light red */
+    color: #991b1b; /* dark red text */
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+  <div class="sidebar">
+    <div>
+      <h2>RAJ CABLE</h2>
+      <ul>
+        <li><a href="worker.html" class="active">Dashboard</a></li>
+        <li><a href="billing.html">Billing</a></li>
+      </ul>
+    </div>
+    <ul>
+      <li><a href="index.html">Logout</a></li>
+    </ul>
+  </div>
+
+  <div class="main">
+    <h2>Customer List</h2>
+    <table id="customerTable">
+      <thead>
+        <tr>
+          <th>Customer Number</th>
+          <th>Payment Status</th>
+          <th>Paid Amount (₹)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Rows will be generated here -->
+      </tbody>
+    </table>
+  </div>
+
+<script>
+  function loadCustomers() {
+    const tbody = document.querySelector('#customerTable tbody');
+    tbody.innerHTML = '';
+
+    const customers = JSON.parse(localStorage.getItem('customerData') || '[]');
+
+    if(customers.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No customer data found.</td></tr>';
+      return;
+    }
+
+    customers.forEach(cust => {
+      const tr = document.createElement('tr');
+
+      // Payment status cell with color class
+      const statusClass = cust.paid ? 'status-paid' : 'status-pending';
+      const paidAmount = cust.paidAmount ? cust.paidAmount : '-';
+
+      tr.innerHTML = `
+        <td>${cust.CUSTOMER_NBR}</td>
+        <td class="${statusClass}">${cust.paid ? 'Paid' : 'Pending'}</td>
+        <td>${paidAmount}</td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  window.onload = loadCustomers;
+</script>
+</body>
+</html>

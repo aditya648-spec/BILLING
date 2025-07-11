@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Papa Dashboard - RAJ CABLE</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    display: flex;
+    background-color: #f9fafb;
+    flex-direction: row;
+  }
+  .sidebar {
+    width: 230px;
+    background-color: #1e293b;
+    color: white;
+    padding: 20px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .sidebar h2 {
+    font-size: 24px;
+    margin-bottom: 30px;
+    text-align: center;
+    color: white;
+  }
+  .sidebar ul {
+    list-style: none;
+    padding: 0;
+  }
+  .sidebar ul li {
+    margin-bottom: 18px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+  .sidebar ul li:hover,
+  .sidebar ul li.active {
+    background-color: #334155;
+    color: #00C49F;
+  }
+  .main {
+    flex: 1;
+    padding: 30px;
+  }
+  #pieContainer {
+    max-width: 400px;
+    margin: 30px auto;
+    text-align: center;
+    position: relative;
+    height: 400px;
+  }
+  #summaryCenter {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: bold;
+    font-size: 18px;
+    pointer-events: none;
+    white-space: pre-line;
+  }
+  #customerList {
+    margin-top: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+    text-align: left;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  #customerList li {
+    padding: 5px 8px;
+    border-bottom: 1px solid #ddd;
+  }
+
+  @media (max-width: 600px) {
+    body {
+      flex-direction: column;
+    }
+    .sidebar {
+      width: 100%;
+      height: auto;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .sidebar ul {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .sidebar ul li {
+      margin: 5px;
+      flex: 1 1 100px;
+      text-align: center;
+    }
+    .main {
+      padding: 15px;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="sidebar">
+    <div>
+      <h2>RAJ CABLE</h2>
+      <ul>
+        <li class="active" onclick="navigateTab(this)">Dashboard</li>
+        <li onclick="location.href='upload.html'">Upload</li>
+        <li onclick="location.href='custadd.html'">Customer Add</li>
+        <li onclick="location.href='custupload.html'">Customer Upload</li>
+      </ul>
+    </div>
+    <ul>
+      <li onclick="location.href='index.html'">Logout</li>
+    </ul>
+  </div>
+
+  <div class="main">
+    <h2>Dashboard Overview</h2>
+    <div id="pieContainer">
+      <canvas id="statusPie" width="400" height="400"></canvas>
+      <div id="summaryCenter"></div>
+      <ul id="customerList"></ul>
+    </div>
+  </div>
+
+  <script>
+    let statusPieChart;
+
+    function loadDashboardData() {
+      const customers = JSON.parse(localStorage.getItem("customerData") || "[]");
+      const customerNames = JSON.parse(localStorage.getItem("customerNames") || "{}");
+
+      const paidCount = customers.filter(c => c.paid).length;
+      const unpaidCount = customers.length - paidCount;
+
+      document.getElementById("summaryCenter").innerText = `Paid: ${paidCount}\nPending: ${unpaidCount}`;
+
+      if (!statusPieChart) {
+        const ctx = document.getElementById("statusPie").getContext("2d");
+        statusPieChart = new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: ["Paid", "Pending"],
+            datasets: [{
+              data: [paidCount, unpaidCount],
+              backgroundColor: ["#00C49F", "#f87171"],
+              borderColor: "#fff",
+            }]
+          },
+          options: {
+            cutout: "65%",
+            onClick: (e, elements) => {
+              if (elements.length) {
+                const index = elements[0].index;
+                const label = statusPieChart.data.labels[index].toLowerCase();
+                showCustomerList(label);
+              }
+            },
+            plugins: {
+              legend: { position: "bottom" },
+              tooltip: {
+                callbacks: {
+                  label: ctx => `${ctx.label}: ${ctx.raw}`
+                }
+              }
+            }
+          }
+        });
+      } else {
+        statusPieChart.data.datasets[0].data = [paidCount, unpaidCount];
+        statusPieChart.update();
+      }
+      document.getElementById("customerList").innerHTML = "";
+    }
+
+    function showCustomerList(type) {
+      const customers = JSON.parse(localStorage.getItem("customerData") || "[]");
+      const customerNames = JSON.parse(localStorage.getItem("customerNames") || "{}");
+
+      const filtered = customers.filter(c => (type === "paid" ? c.paid : !c.paid));
+      const listEl = document.getElementById("customerList");
+      listEl.innerHTML = "";
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<li>No ${type} customers found.</li>`;
+        return;
+      }
+
+      filtered.forEach(cust => {
+        const name = customerNames[cust.CUSTOMER_NBR] || cust.CUSTOMER_NBR;
+        const li = document.createElement("li");
+        li.textContent = `${name} (${cust.CUSTOMER_NBR})`;
+        listEl.appendChild(li);
+      });
+    }
+
+    window.addEventListener("storage", (event) => {
+      if (event.key === "customerData" || event.key === "customerNames" || event.key === "customerDataSync") {
+        loadDashboardData();
+      }
+    });
+
+    // Initial load
+    loadDashboardData();
+
+    function navigateTab(el) {
+      document.querySelectorAll(".sidebar ul li").forEach(li => li.classList.remove("active"));
+      el.classList.add("active");
+    }
+  </script>
+</body>
+</html>

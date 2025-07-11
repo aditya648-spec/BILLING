@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customer Add - RAJ CABLE</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      background-color: #f9fafb;
+    }
+    .sidebar {
+      width: 230px;
+      background-color: #1e293b;
+      color: white;
+      padding: 20px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .sidebar h2 {
+      font-size: 24px;
+      margin-bottom: 30px;
+      text-align: center;
+      color: white;
+    }
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    .sidebar ul li {
+      margin-bottom: 18px;
+      border-radius: 6px;
+    }
+    .sidebar ul li a {
+      font-family: 'Segoe UI', sans-serif;
+      font-weight: 600;
+      color: white;
+      text-decoration: none;
+      display: block;
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .sidebar ul li a:hover,
+    .sidebar ul li a.active {
+      background-color: #334155;
+      color: #00C49F;
+    }
+    .main {
+      flex: 1;
+      padding: 30px;
+    }
+    h2 {
+      font-size: 22px;
+      margin-bottom: 15px;
+      color: #111827;
+    }
+    .form-box {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      max-width: 500px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 10px;
+      width: 100%;
+      margin-top: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+    }
+    button {
+      background-color: #00C49F;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    button:hover {
+      background-color: #059669;
+    }
+    #status {
+      margin-top: 15px;
+      color: green;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .sidebar ul {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .sidebar ul li {
+        margin: 5px;
+        flex: 1 1 100px;
+        text-align: center;
+      }
+      .main {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <div>
+      <h2>RAJ CABLE</h2>
+      <ul>
+        <li><a href="papa.html">Dashboard</a></li>
+        <li><a href="upload.html">Upload</a></li>
+        <li><a href="#" class="active">Customer Add</a></li>
+        <li><a href="custupload.html">Customer Upload</a></li>
+      </ul>
+    </div>
+    <ul>
+      <li><a href="index.html">Logout</a></li>
+    </ul>
+  </div>
+
+  <div class="main">
+    <h2>Add Customer Manually</h2>
+    <div class="form-box">
+      <input type="text" id="addName" placeholder="Enter Customer Name" />
+      <input type="text" id="addNumber" placeholder="Enter Customer Number" />
+      <button onclick="addCustomerName()">Add Customer</button>
+      <div id="status"></div>
+    </div>
+  </div>
+
+  <script>
+    function addCustomerName() {
+      const name = document.getElementById("addName").value.trim();
+      const number = document.getElementById("addNumber").value.trim();
+      if (!name || !number) return alert("Please enter both name and number");
+      const map = JSON.parse(localStorage.getItem("customerNames") || "{}");
+      map[number] = name;
+      localStorage.setItem("customerNames", JSON.stringify(map));
+      document.getElementById("status").innerText = `Added ${name} (${number})`;
+      document.getElementById("addName").value = "";
+      document.getElementById("addNumber").value = "";
+    }
+  </script>
+</body>
+</html>
