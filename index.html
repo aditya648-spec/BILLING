@@ -68,32 +68,35 @@
     <h2>RAJ CABLE LOGIN</h2>
     <input type="text" id="username" placeholder="Username" />
     <input type="password" id="password" placeholder="Password" />
-    <button onclick="login()">Login</button>
+    <button onclick="handleLogin()">Login</button>
     <div id="error" class="error"></div>
   </div>
 
   <script>
-    const loginData = {
-      rohit: { password: "12345678", role: "worker", redirect: "worker.html" },
-      raj:   { password: "9945811608", role: "papa", redirect: "papa.html" }
+    const loginCredentials = {
+      rohit: { password: "12345678", redirect: "worker.html" },
+      raj:   { password: "9945811608", redirect: "papa.html" }
     };
 
-    function login() {
-      const user = document.getElementById("username").value.trim();
-      const pass = document.getElementById("password").value.trim();
+    function handleLogin() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
       const errorDiv = document.getElementById("error");
 
-      if (loginData[user] && loginData[user].password === pass) {
-        localStorage.setItem("loginRole", loginData[user].role);
-        window.location.href = loginData[user].redirect;
-      } else {
-        errorDiv.textContent = "Invalid username or password. Please try again.";
+      if (loginCredentials.hasOwnProperty(username)) {
+        if (loginCredentials[username].password === password) {
+          window.location.href = loginCredentials[username].redirect;
+          return;
+        }
       }
+
+      // If incorrect
+      errorDiv.textContent = "Invalid username or password. Please try again.";
     }
 
     document.addEventListener("keydown", function(e) {
       if (e.key === "Enter") {
-        login();
+        handleLogin();
       }
     });
   </script>
