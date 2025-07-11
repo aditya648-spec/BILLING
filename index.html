@@ -1,46 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>RAJ CABLE LOGIN</title>
   <style>
     body {
+      margin: 0;
       font-family: 'Segoe UI', sans-serif;
+      background-color: #f1f5f9;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background: #f1f5f9;
     }
+
     .login-box {
       background: white;
       padding: 30px;
       border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 0 15px rgba(0,0,0,0.1);
       max-width: 400px;
       width: 100%;
     }
-    input, button {
-      display: block;
-      width: 100%;
-      padding: 10px;
-      margin: 10px 0;
-      font-size: 16px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #111827;
     }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
     button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 15px;
+      font-size: 16px;
       background-color: #00C49F;
       color: white;
       font-weight: bold;
       border: none;
+      border-radius: 6px;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #059669;
     }
-    h2 {
+
+    .error {
+      color: red;
+      margin-top: 10px;
       text-align: center;
     }
   </style>
@@ -48,27 +66,35 @@
 <body>
   <div class="login-box">
     <h2>RAJ CABLE LOGIN</h2>
-    <input type="text" id="username" placeholder="Enter Username" />
-    <input type="password" id="password" placeholder="Enter Password" />
+    <input type="text" id="username" placeholder="Username" />
+    <input type="password" id="password" placeholder="Password" />
     <button onclick="login()">Login</button>
+    <div id="error" class="error"></div>
   </div>
 
   <script>
-    function login() {
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
+    const loginData = {
+      rohit: { password: "12345678", role: "worker", redirect: "worker.html" },
+      raj:   { password: "9945811608", role: "papa", redirect: "papa.html" }
+    };
 
-      if (username === 'papa' && password === 'raj@123') {
-        window.location.href = 'papa.html';
-      } else if (username === 'worker' && password === 'raj@123') {
-        window.location.href = 'worker.html';
+    function login() {
+      const user = document.getElementById("username").value.trim();
+      const pass = document.getElementById("password").value.trim();
+      const errorDiv = document.getElementById("error");
+
+      if (loginData[user] && loginData[user].password === pass) {
+        localStorage.setItem("loginRole", loginData[user].role);
+        window.location.href = loginData[user].redirect;
       } else {
-        alert('Invalid login. Try papa / worker and password raj@123');
+        errorDiv.textContent = "Invalid username or password. Please try again.";
       }
     }
 
     document.addEventListener("keydown", function(e) {
-      if (e.key === "Enter") login();
+      if (e.key === "Enter") {
+        login();
+      }
     });
   </script>
 </body>
