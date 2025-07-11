@@ -32,19 +32,28 @@
     }
     .sidebar ul li {
       margin-bottom: 18px;
+    }
+    .sidebar ul li a {
+      color: white;
+      text-decoration: none;
+      display: block;
       padding: 10px 12px;
       border-radius: 6px;
-      cursor: pointer;
+      font-weight: 600;
       transition: 0.3s;
     }
-    .sidebar ul li:hover,
-    .sidebar ul li.active {
+    .sidebar ul li a:hover,
+    .sidebar ul li a.active {
       background-color: #334155;
       color: #00C49F;
     }
     .main {
       flex: 1;
       padding: 30px;
+    }
+    h2 {
+      font-size: 22px;
+      margin-bottom: 20px;
     }
     .form-box {
       background: white;
@@ -56,7 +65,7 @@
     select, input, button {
       padding: 10px;
       width: 100%;
-      margin-top: 10px;
+      margin-top: 15px;
       font-size: 16px;
       border-radius: 6px;
       border: 1px solid #d1d5db;
@@ -65,39 +74,38 @@
       background-color: #00C49F;
       color: white;
       font-weight: bold;
-      cursor: pointer;
       border: none;
+      cursor: pointer;
     }
     button:hover {
       background-color: #059669;
     }
-    .button-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .modal {
+    #qrModal, #printModal {
       display: none;
       position: fixed;
-      z-index: 100;
+      z-index: 20;
       left: 0;
       top: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0,0,0,0.6);
-      justify-content: center;
-      align-items: center;
+      background: rgba(0,0,0,0.5);
     }
     .modal-content {
       background: white;
-      padding: 25px;
+      margin: 15% auto;
+      padding: 20px;
       border-radius: 10px;
-      text-align: center;
+      width: 90%;
       max-width: 400px;
+      text-align: center;
     }
     .modal-content img {
-      max-width: 200px;
-      margin: 15px 0;
+      width: 200px;
+      margin-bottom: 20px;
+    }
+    .modal-content button {
+      margin: 10px;
+      width: 40%;
     }
   </style>
 </head>
@@ -106,108 +114,107 @@
     <div>
       <h2>RAJ CABLE</h2>
       <ul>
-        <li onclick="location.href='worker.html'">Dashboard</li>
-        <li class="active">Billing</li>
+        <li><a href="worker.html">Dashboard</a></li>
+        <li><a href="#" class="active">Billing</a></li>
       </ul>
     </div>
     <ul>
-      <li onclick="location.href='index.html'">Logout</li>
+      <li><a href="index.html">Logout</a></li>
     </ul>
   </div>
 
   <div class="main">
-    <h2>Billing Section</h2>
+    <h2>Customer Billing</h2>
     <div class="form-box">
-      <label>Select Customer</label>
-      <select id="customerDropdown">
-        <option value="">-- Select Customer --</option>
-      </select>
-      <label>Enter Amount</label>
-      <input type="number" id="amountInput" placeholder="Enter amount" />
-
-      <div class="button-row">
-        <button onclick="showQR()">UPI</button>
-        <button onclick="markAsPaid()">Mark as Paid</button>
-      </div>
+      <select id="customerSelect"></select>
+      <input type="number" id="amount" placeholder="Enter amount" />
+      <button onclick="openQR()">UPI</button>
+      <button onclick="confirmPayment()">Mark as Paid</button>
     </div>
   </div>
 
   <!-- QR Modal -->
   <div id="qrModal" class="modal">
     <div class="modal-content">
-      <h3>Scan to Pay</h3>
       <img src="QRCode.png" alt="UPI QR Code" />
-      <div class="button-row">
-        <button onclick="markAsPaid()">Mark as Paid</button>
-        <button onclick="hideQR()">Cancel</button>
-      </div>
+      <button onclick="hideQR()">Cancel</button>
+      <button onclick="confirmPayment()">Mark as Paid</button>
     </div>
   </div>
 
-  <!-- Print Modal -->
+  <!-- Print Confirmation Modal -->
   <div id="printModal" class="modal">
     <div class="modal-content">
       <p>Do you want to print the receipt?</p>
-      <div class="button-row">
-        <button onclick="doPrint()">Yes</button>
-        <button onclick="hidePrint()">No</button>
-      </div>
+      <button onclick="doPrint()">Yes</button>
+      <button onclick="closePrintModal()">No</button>
     </div>
   </div>
 
   <script>
-    const dropdown = document.getElementById("customerDropdown");
-    const map = JSON.parse(localStorage.getItem("customerNames") || "{}");
-    const data = JSON.parse(localStorage.getItem("customerData") || "[]");
+    const backendURL = "https://script.google.com/macros/s/AKfycbxq25psbXBKOBpQ_o2JvW2Aqu1Ju5MQ5DEcQMs6dnk2JfbbdpRV8zEs_nTajjd_milcBw/exec";
 
-    Object.keys(map).forEach(num => {
-      const option = document.createElement("option");
-      option.value = num;
-      option.textContent = map[num];
-      dropdown.appendChild(option);
-    });
+    async function loadCustomers() {
+      const res = await fetch(backendURL + "?action=fetch");
+      const data = await res.json();
+      const nameMap = data.nameMap || {};
+      const unpaid = data.data.filter(c => !c.paid);
 
-    function showQR() {
-      const modal = document.getElementById("qrModal");
-      modal.style.display = "flex";
+      const dropdown = document.getElementById("customerSelect");
+      dropdown.innerHTML = "<option value=''>Select Customer</option>";
+      unpaid.forEach(c => {
+        const name = nameMap[c.CUSTOMER_NBR] || c.CUSTOMER_NBR;
+        const opt = document.createElement("option");
+        opt.value = c.CUSTOMER_NBR;
+        opt.text = name;
+        dropdown.appendChild(opt);
+      });
+    }
+
+    function openQR() {
+      if (!document.getElementById("customerSelect").value) return alert("Select customer");
+      document.getElementById("qrModal").style.display = "block";
     }
 
     function hideQR() {
       document.getElementById("qrModal").style.display = "none";
     }
 
-    function markAsPaid() {
-      const number = dropdown.value;
-      const amount = document.getElementById("amountInput").value;
-      if (!number || !amount) return alert("Select customer and enter amount");
+    function confirmPayment() {
+      const customer = document.getElementById("customerSelect").value;
+      const amount = document.getElementById("amount").value;
+      if (!customer || !amount) return alert("Please fill all fields");
 
-      const customers = data.map(c => {
-        if (c.CUSTOMER_NBR === number) {
-          return { ...c, paid: true };
-        }
-        return c;
-      });
-
-      localStorage.setItem("customerData", JSON.stringify(customers));
-      document.getElementById("printModal").style.display = "flex";
+      fetch(backendURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "markPaid",
+          CUSTOMER_NBR: customer,
+          amount: amount
+        })
+      }).then(res => res.json())
+        .then(res => {
+          if (res.success) {
+            document.getElementById("qrModal").style.display = "none";
+            document.getElementById("printModal").style.display = "block";
+          } else {
+            alert("Error: " + res.message);
+          }
+        });
     }
 
     function doPrint() {
-      document.getElementById("printModal").style.display = "none";
       window.print();
+      closePrintModal();
     }
 
-    function hidePrint() {
+    function closePrintModal() {
       document.getElementById("printModal").style.display = "none";
+      location.reload();
     }
 
-    // Close modal if clicked outside
-    window.onclick = function(e) {
-      if (e.target.classList.contains("modal")) {
-        hideQR();
-        hidePrint();
-      }
-    }
+    window.onload = loadCustomers;
   </script>
 </body>
 </html>
