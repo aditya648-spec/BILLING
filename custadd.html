@@ -25,7 +25,6 @@
       font-size: 24px;
       margin-bottom: 30px;
       text-align: center;
-      color: white;
     }
     .sidebar ul {
       list-style: none;
@@ -33,17 +32,14 @@
     }
     .sidebar ul li {
       margin-bottom: 18px;
-      border-radius: 6px;
     }
     .sidebar ul li a {
-      font-family: 'Segoe UI', sans-serif;
-      font-weight: 600;
       color: white;
       text-decoration: none;
       display: block;
       padding: 10px 12px;
       border-radius: 6px;
-      cursor: pointer;
+      font-weight: 600;
       transition: 0.3s;
     }
     .sidebar ul li a:hover,
@@ -79,8 +75,8 @@
       background-color: #00C49F;
       color: white;
       font-weight: bold;
-      cursor: pointer;
       border: none;
+      cursor: pointer;
     }
     button:hover {
       background-color: #059669;
@@ -144,16 +140,31 @@
   </div>
 
   <script>
+    const backendURL = "https://script.google.com/macros/s/AKfycbxq25psbXBKOBpQ_o2JvW2Aqu1Ju5MQ5DEcQMs6dnk2JfbbdpRV8zEs_nTajjd_milcBw/exec";
+
     function addCustomerName() {
       const name = document.getElementById("addName").value.trim();
       const number = document.getElementById("addNumber").value.trim();
-      if (!name || !number) return alert("Please enter both name and number");
-      const map = JSON.parse(localStorage.getItem("customerNames") || "{}");
-      map[number] = name;
-      localStorage.setItem("customerNames", JSON.stringify(map));
-      document.getElementById("status").innerText = `Added ${name} (${number})`;
-      document.getElementById("addName").value = "";
-      document.getElementById("addNumber").value = "";
+      if (!name || !number) return alert("Please enter both name and number.");
+
+      fetch(backendURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "mapName",
+          CUSTOMER_NBR: number,
+          name: name
+        })
+      }).then(res => res.json())
+        .then(res => {
+          if (res.success) {
+            document.getElementById("status").innerText = `Added ${name} (${number}) successfully.`;
+            document.getElementById("addName").value = "";
+            document.getElementById("addNumber").value = "";
+          } else {
+            alert("Failed to save: " + res.message);
+          }
+        });
     }
   </script>
 </body>
